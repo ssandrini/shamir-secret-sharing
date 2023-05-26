@@ -57,7 +57,7 @@ BMPImage * readBmpImage(char * filename) {
 }
 
 void freeBmpImage(BMPImage * image) {
-    munmap(image->header, sizeof(BMPHeader));
+    munmap((void *) image->header, image->header->file_size);
     free(image);
 }
 
@@ -71,9 +71,9 @@ void dumpBmpImage(BMPImage * bmp, const char * path){
     printf("Data offset: %d\n", bmp->header->data_offset);
     fwrite(bmp->header, bmp->header->data_offset, 1, file);
 
-    uint32_t width = bmp->header->width;
-    uint32_t height = bmp->header->height;
-    uint32_t padding = (4 - (width % 4)) % 4;
+    int width = bmp->header->width;
+    int height = bmp->header->height;
+    int padding = (4 - (width % 4)) % 4;
     uint8_t* data = bmp->image;
     printf("width: %d\n", width);
     printf("height: %d\n", height);
