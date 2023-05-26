@@ -59,3 +59,9 @@ dkms.conf
 
 # Thumbnails
 ._*
+
+# Vscode
+.vscode/
+
+# images
+images/
