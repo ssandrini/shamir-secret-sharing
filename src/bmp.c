@@ -49,6 +49,12 @@ BMPImage * readBmpImage(char * filename) {
     }
 
     BMPImage * bmpImage = malloc(sizeof(BMPImage));
+    if (bmpImage == NULL) {
+        perror("malloc error");
+        munmap(map, file_stat.st_size);
+        close(fd);
+        return NULL;
+    }
     bmpImage->header = bmpHeader;
     bmpImage->image = map + bmpImage->header->data_offset;
     close(fd);
@@ -56,35 +62,37 @@ BMPImage * readBmpImage(char * filename) {
     return bmpImage; 
 }
 
-void freeBmpImage(BMPImage * image) {
+void freeBmpImage(BMPImage * image) {//TODO: OJO EL MEMORY LEAK, CUANDO HACEMOS MMAP LO HACEMOS CON EL FILE SIZE DEL ARCHIVO, NO CON EL DEL HEADER
     munmap((void *) image->header, image->header->file_size);
     free(image);
 }
 
 void dumpBmpImage(BMPImage * bmp, const char * path){
+    
     // Open file for writing
     FILE* file = fopen(path, "wb");
     if (file == NULL) {
         fprintf(stderr, "Error: could not open file for writing\n");
         return;
     }
-    printf("Data offset: %d\n", bmp->header->data_offset);
+    
+    // printf("Data offset: %d\n", bmp->header->data_offset);
     fwrite(bmp->header, bmp->header->data_offset, 1, file);
 
     int width = bmp->header->width;
     int height = bmp->header->height;
     int padding = (4 - (width % 4)) % 4;
     uint8_t* data = bmp->image;
-    printf("width: %d\n", width);
-    printf("height: %d\n", height);
-    printf("padding: %d\n", padding);
+    // printf("width: %d\n", width);
+    // printf("height: %d\n", height);
+    // printf("padding: %d\n", padding);
     int y = 0, x = 0, i = 0;
     for (y = 0; y < height; y++) { 
         for (x = 0; x < width; x++) {
             uint8_t pixel = *(data + y*(width + padding) + x);
             fwrite(&pixel, sizeof(uint8_t), 1, file);
             if(y == height-1) {
-                printf("pixel: %d, x:%d\n", pixel, x);
+                // printf("pixel: %d, x:%d\n", pixel, x);
             }
         }
         uint8_t padding_byte = 0x00;
