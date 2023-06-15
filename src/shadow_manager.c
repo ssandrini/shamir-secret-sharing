@@ -87,7 +87,7 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
 
 
 uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow_numbers) {
-
+    
     int secret_size = shadow_size * (k - 1);
     int block_size = BLOCK_SIZE(k);
     uint8_t* secret = (uint8_t*) malloc(sizeof(uint8_t) * secret_size);
