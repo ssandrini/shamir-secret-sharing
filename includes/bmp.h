@@ -45,9 +45,9 @@ typedef struct BMPImage {
     uint8_t * image;
 } BMPImage;
 
-BMPImage * readBmpImage(char * filename);
-void freeBmpImage(BMPImage * image);
-void dumpBmpImage(BMPImage * image, const char * outputPath);
+BMPImage * read_bmp_image(char * filename);
+void free_bmp_image(BMPImage * image);
+void dump_bmp_image(BMPImage * image, const char * output_path);
 
 
 #endif // __BMP_H__

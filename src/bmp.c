@@ -11,7 +11,7 @@
 #define OFFSET_ZERO 0
 #define BITMAP_SIGNATURE 0x4D42
 
-BMPImage * readBmpImage(char * filename) {
+BMPImage * rea_bmp_image(char * filename) {
     int fd = open(filename, O_RDONLY);
     if (fd == -1) {
         perror("error opening file");
@@ -33,15 +33,15 @@ BMPImage * readBmpImage(char * filename) {
     }
 
     
-    BMPHeader * bmpHeader = (BMPHeader *) map;
-    if (bmpHeader->bmp_signature != BITMAP_SIGNATURE) {
+    BMPHeader * bmp_header = (BMPHeader *) map;
+    if (bmp_header->bmp_signature != BITMAP_SIGNATURE) {
         fprintf(stderr, "Invalid BMP signature\n");
         munmap(map, file_stat.st_size);
         close(fd);
         return NULL;
     }
 
-    if (bmpHeader->bits_per_pixel != 8) {
+    if (bmp_header->bits_per_pixel != 8) {
         fprintf(stderr, "Only 8-bit BMP images are supported");
         munmap(map, file_stat.st_size);
         close(fd);
@@ -55,19 +55,19 @@ BMPImage * readBmpImage(char * filename) {
         close(fd);
         return NULL;
     }
-    bmpImage->header = bmpHeader;
+    bmpImage->header = bmp_header;
     bmpImage->image = map + bmpImage->header->data_offset;
     close(fd);
 
     return bmpImage; 
 }
 
-void freeBmpImage(BMPImage * image) {//TODO: OJO EL MEMORY LEAK, CUANDO HACEMOS MMAP LO HACEMOS CON EL FILE SIZE DEL ARCHIVO, NO CON EL DEL HEADER
+void free_bmp_image(BMPImage * image) {//TODO: OJO EL MEMORY LEAK, CUANDO HACEMOS MMAP LO HACEMOS CON EL FILE SIZE DEL ARCHIVO, NO CON EL DEL HEADER
     munmap((void *) image->header, image->header->file_size);
     free(image);
 }
 
-void dumpBmpImage(BMPImage * bmp, const char * path){
+void dump_bmp_image(BMPImage * bmp, const char * path){
     
     // Open file for writing
     FILE* file = fopen(path, "wb");

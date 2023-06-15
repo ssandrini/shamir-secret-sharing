@@ -31,19 +31,19 @@ int main(int argc, char* argv[]) {
   }
 
   char *option = argv[1];
-  char *imagePath = argv[2];
+  char *image_path = argv[2];
   int k = atoi(argv[3]);
   char *dir = argv[4];
 
   // // Read the BMP image from the input file //TODO: REMOVE LATER
-  // BMPImage* image = readBmpImage(imagePath);
+  // BMPImage* image = readBmpImage(image_path);
   // if (image == NULL) {
-  //     fprintf(stderr, "Failed to read BMP image from file: %s\n", imagePath);
+  //     fprintf(stderr, "Failed to read BMP image from file: %s\n", image_path);
   //     return 1;
   // }
 
   if (option[0] == 'd') {
-      distribute_image(imagePath, k, dir);
+      distribute_image(image_path, k, dir);
       printf("distribuir\n");
   } else if (option[0] == 'r') {
       // recover_image(image, k, dir);
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
   // // Free the allocated memory for the BMP image //TODO: REMOVE LATER
   // freeBmpImage(image);
 
-  printf("BMP image dumped successfully to file: %s\n", imagePath);
+  printf("BMP image dumped successfully to file: %s\n", image_path);
 
   return 0;
 

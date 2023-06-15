@@ -10,16 +10,16 @@
 #include "image_manager.h"
 #include "shadow_manager.h"
 
-void distribute_image(char* imagePath,int k, char* dir) {
+void distribute_image(char* image_path,int k, char* dir) {
     // Read the BMP image from the input file
-    BMPImage* image = readBmpImage(imagePath);
+    BMPImage* image = read_bmp_image(image_path);
     if (image == NULL) {
-        fprintf(stderr, "Failed to read BMP image from file: %s\n", imagePath);
+        fprintf(stderr, "Failed to read BMP image from file: %s\n", image_path);
         return 1;
     }
-    int with = image->header->width;
+    int width = image->header->width;
     int height = image->header->height;
-    int imageSize = with * height;
+    int image_size = width * height;
 
     if ( k <= 4 && k >= 3) {
         //TODO: LSB4
@@ -29,10 +29,10 @@ void distribute_image(char* imagePath,int k, char* dir) {
         fprintf(stderr, "Invalid k value. Please choose a value between 3 and 8.\n");
         return;
     }
-    generate_shadows(k, k, imageSize, image->image);
+    generate_shadows(k, k, image_size, image->image);
 
 
     // Free the allocated memory for the BMP image
-    freeBmpImage(image);
+    free_bmp_image(image);
 
 }
