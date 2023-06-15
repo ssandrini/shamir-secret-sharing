@@ -12,12 +12,15 @@ typedef struct Polynom {
 } Polynom;
 
 //Evaluate polynom on given x with modular arithmetic
-uint8_t evaluate_polynom_mod(Polynom * polynom, int x);
+uint8_t evaluate_polynom(Polynom * polynom, int x);
 
 //Free polynom reserved memory
 void polynom_destroy(Polynom * polynom);
 
 //Creates Polynom from an array of size bytes using modular arithmetic.
 Polynom * polynom_from_bytes(uint8_t * bytes, int size);
+
+//Reconstruct polynom using Lagrange interpolation with modular arithmetic.
+Polynom * lagrange_interpolate(int * points, int * shadow_numbers, int size);
 
 #endif

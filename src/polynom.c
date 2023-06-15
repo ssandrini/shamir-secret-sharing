@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include "polynom.h"
 
-
-uint8_t evaluate_polynom_mod(Polynom * polynom, int x) {
+uint8_t evaluate_polynom(Polynom * polynom, int x) {
     int result = 0;
     
     for (int i = 0; i <= polynom->degree; i++) {
@@ -35,4 +34,15 @@ Polynom * polynom_from_bytes(uint8_t * bytes, int size) {
         polynom->coefficients[i] = MODULAR_ARITHMETIC(bytes[i]);
     
     return polynom; 
+}
+
+Polynom * lagrange_interpolate(int * points, int * shadow_numbers, int size) {
+
+    Polynom * polynom = (Polynom *)malloc(sizeof(Polynom));
+    polynom->degree = size - 1;
+    polynom->coefficients = (uint8_t*)malloc(size * sizeof(uint8_t)); 
+
+    //TODO: IMPLEMENT THIS FUNCTION
+
+    return polynom;
 }
