@@ -25,7 +25,8 @@
 typedef struct  __attribute__((__packed__)) BMPHeader {
     uint16_t bmp_signature;         // (must be 0x4D42 for BMP files)
     uint32_t file_size;             
-    uint32_t reserved;              // reserved; must be 0
+    uint16_t reserved1;
+    uint16_t reserved2;
     uint32_t data_offset;           
     uint32_t header_size;           
     uint32_t width;                 

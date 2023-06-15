@@ -19,38 +19,55 @@ static bool detect_cheating(int a_0, int a_1, int b_0, int b_1) {
 
 //generate shadow function
 uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
-
-    if (k < MIN_K || k > MAX_K || image_size % (k - 1) != 0)
-        return NULL;
-
     int block_size = BLOCK_SIZE(k);
     int shadow_size = image_size / (k - 1);
 
-    //Reserve space for shadow matrix, row = shadow
+    // Reserve space for shadow matrix, row = shadow
     uint8_t** shadows = (uint8_t**)malloc(sizeof(uint8_t*) * n);
+    if(shadows == NULL) {
+        fprintf(stderr, "Error allocating memory for shadows\n");
+        return NULL;
+    }
 
-    for(int i = 0; i < n; i++) 
+    for(int i = 0; i < n; i++) {
         shadows[i] = (uint8_t*)malloc(sizeof(uint8_t) * shadow_size);
-    
-    //The dealer divides I into t-non-overlapping 2k − 2-pixel blocks, B1, B2, ..., Bt.
-
-    //For each iteration generate shadow_i byte and shadow_i + 1 byte for each shadow in shadows
+        if(shadows[i] == NULL) {
+            free_shadows(shadows, i);
+            fprintf(stderr, "Error allocating memory for shadows\n");
+            return NULL;
+        }
+    }
+    // The dealer divides I into t-non-overlapping 2k − 2-pixel blocks, B1, B2, ..., Bt.
+    // For each iteration generate shadow_i byte and shadow_i + 1 byte for each shadow in shadows
     int shadow_i = 0;
     for (int i = 0; i < image_size; i += block_size) {
-        int a_0 = secret[i];
-        int a_1 = secret[i+1];
+        uint8_t a_0 = secret[i];
+        uint8_t a_1 = secret[i+1];
 
         //If mod is 0 then a_i = 1
         a_0 = MODULAR_ARITHMETIC(a_0) ? MODULAR_ARITHMETIC(a_0) : 1;
         a_1 = MODULAR_ARITHMETIC(a_1) ? MODULAR_ARITHMETIC(a_1) : 1;
 
         Polynom * f = polynom_from_bytes(secret, k);
+        if(f == NULL) {
+            fprintf(stderr, "Error allocating memory for polynom\n");
+            free_shadows(shadows, n);
+            return NULL;
+        }
+
         uint8_t r_i = MODULAR_ARITHMETIC(randomGF251());
 
-        uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * a_0); //riai,0 + bi,0 = 0
-        uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * a_1); //riai,1 + bi,1 = 0
+        uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * a_0); // riai,0 + bi,0 = 0
+        uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * a_1); // riai,1 + bi,1 = 0
 
-        Polynom * g = polynom_from_bytes(secret + i + k - 2, k); //i + k - 2 for b_0 and b_1
+        Polynom * g = polynom_from_bytes(secret + i + k - 2, k); // i + k - 2 for b_0 and b_1
+        if(g == NULL) {
+            fprintf(stderr, "Error allocating memory for polynom\n");
+            polynom_destroy(f);
+            free_shadows(shadows, n);
+            return NULL;
+        }
+
         g->coefficients[0] = b_0;
         g->coefficients[1] = b_1;
 
@@ -59,7 +76,6 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
             shadows[j][shadow_i] = evaluate_polynom(f, j + 1);
             shadows[j][shadow_i + 1] = evaluate_polynom(g, j + 1);
         }
-
         shadow_i += 2;
 
         polynom_destroy(f);
@@ -74,7 +90,11 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow
 
     int secret_size = shadow_size * (k - 1);
     int block_size = BLOCK_SIZE(k);
-    uint8_t* secret = (uint8_t*)malloc(sizeof(uint8_t) * secret_size);
+    uint8_t* secret = (uint8_t*) malloc(sizeof(uint8_t) * secret_size);
+    if(secret == NULL) {
+        fprintf(stderr, "Error allocating memory for secret\n");
+        return NULL;
+    }
 
     int secret_i = 0;
     for (int block_i = 0; block_i < shadow_size; block_i += 2) {
@@ -107,4 +127,23 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow
     }
 
     return secret;
+}
+
+void free_shadows(uint8_t** shadows, int n) {
+    for(int i = 0; i < n; i++) {
+        free(shadows[i]);
+    }
+    free(shadows);
+}
+
+void lsbHide(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits) {
+    for(int i = 0; i < shadowSize; i++) {
+        for(int j = 0; j < 8/bits; j++) {
+            uint8_t pixel = (shadowImage->image[j] >> bits ) << bits;
+            uint8_t bitsToHide = shadow[i] >> (8 - bits);
+            pixel = pixel | bitsToHide;
+            shadowImage->image[j] = pixel;
+            shadow[i] = shadow[i] << bits;
+        }   
+    }
 }

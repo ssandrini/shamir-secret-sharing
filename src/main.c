@@ -3,64 +3,37 @@
 #include <string.h>
 #include "bmp.h"
 #include "image_manager.h"
+#include "shadow_manager.h"
 
-int main(int argc, char* argv[]) {
-  // if (argc < 2 || strcmp("h", argv[1]) == 0) {
-  //   printf("Usage: %s <option> <image> <k> <directory>\n", argv[0]);
-  //   return 0;
-  // }
+#define ARGS 5
 
-  // char * option = argv[1]; // 'd'or 'r'
-  // char * image = argv[2]; // image file name
-  // int k = atoi(argv[3]); // number of clusters
-  // char * directory = argv[4]; // directory to save the result
+int main(int argc, char *argv[]) {
+    // TODO: sacar todos los printfs que hay en el proyecto
+    // solamente tienen que aparecer si haces --verbose
+    if (argc != ARGS) {
+        fprintf(stderr, "Usage: %s <option> <image> <k> <directory>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
 
-  // if (strcmp(option, "d") == 0) {
-  //     // TODO: Implement the distribution logic
-  // } else if (strcmp(option, "r") == 0) {
-  //     // TODO: Implement the recovery logic
-  // } else {
-  //     printf("Invalid option. Please choose 'd' or 'r'.\n");
-  // }
+    char * option = argv[1]; 
+    char * image = argv[2]; 
+    int k = atoi(argv[3]); 
+    char * directory = argv[4];
 
-  // return 0;
+    if(k < MIN_K || k > MAX_K) {
+        fprintf(stderr, "k must be between %d and %d\n", MIN_K, MAX_K);
+        return EXIT_FAILURE;
+    }
 
-  if (argc != 5) {
-      fprintf(stderr, "Uso incorrecto: %s [d|r] [imagen] [k] [directorio]\n", argv[0]);
-      return 1;
-  }
+    int result = 0;
+    if (strcmp(option, "d") == 0) {
+        result = distribute_image(image, k, directory);
+    } else if (strcmp(option, "r") == 0) {
+        // TODO: Implement the recovery logic
+    } else {
+        fprintf(stderr, "Invalid option. Please choose 'd' or 'r'.\n");
+        return EXIT_FAILURE;
+    }
 
-  char *option = argv[1];
-  char *image_path = argv[2];
-  int k = atoi(argv[3]);
-  char *dir = argv[4];
-
-  // // Read the BMP image from the input file //TODO: REMOVE LATER
-  // BMPImage* image = readBmpImage(image_path);
-  // if (image == NULL) {
-  //     fprintf(stderr, "Failed to read BMP image from file: %s\n", image_path);
-  //     return 1;
-  // }
-
-  if (option[0] == 'd') {
-      distribute_image(image_path, k, dir);
-      printf("distribuir\n");
-  } else if (option[0] == 'r') {
-      // recover_image(image, k, dir);
-      printf("recuperar\n");
-  } else {
-      fprintf(stderr, "Opción no reconocida: %s. Las opciones son 'd' para distribuir, 'r' para recuperar.\n", option);
-      return 1;
-  }
-
-  // // Dump the BMP image to the output file
-  // dumpBmpImage(image, dir);
-
-  // // Free the allocated memory for the BMP image //TODO: REMOVE LATER
-  // freeBmpImage(image);
-
-  printf("BMP image dumped successfully to file: %s\n", image_path);
-
-  return 0;
-
+    return result == 0 ? EXIT_SUCCESS : EXIT_FAILURE; 
 }

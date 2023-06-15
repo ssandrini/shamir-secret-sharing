@@ -22,13 +22,16 @@ void polynom_destroy(Polynom * polynom) {
 }
 
 Polynom * polynom_from_bytes(uint8_t * bytes, int size) {
-    
-    if(size <= 0)
-        return NULL;
-
     Polynom * polynom = (Polynom *)malloc(sizeof(Polynom));
+    if(polynom == NULL) {
+        return NULL;
+    }
     polynom->degree = size - 1;
     polynom->coefficients = (uint8_t*)malloc(size * sizeof(uint8_t)); 
+    if(polynom->coefficients == NULL) {
+        free(polynom);
+        return NULL;
+    }
 
     for (int i = 0; i < size; i++) 
         polynom->coefficients[i] = MODULAR_ARITHMETIC(bytes[i]);
@@ -39,8 +42,15 @@ Polynom * polynom_from_bytes(uint8_t * bytes, int size) {
 Polynom * lagrange_interpolate(int * points, int * shadow_numbers, int size) {
 
     Polynom * polynom = (Polynom *)malloc(sizeof(Polynom));
+    if(polynom == NULL) {
+        return NULL;
+    }
     polynom->degree = size - 1;
     polynom->coefficients = (uint8_t*)malloc(size * sizeof(uint8_t)); 
+    if(polynom->coefficients == NULL) {
+        free(polynom);
+        return NULL;
+    }
 
     //TODO: IMPLEMENT THIS FUNCTION
 

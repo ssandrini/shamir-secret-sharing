@@ -10,8 +10,9 @@
 
 #define OFFSET_ZERO 0
 #define BITMAP_SIGNATURE 0x4D42
+#define MAX_FILE_SIZE 5242880
 
-BMPImage * rea_bmp_image(char * filename) {
+BMPImage * read_bmp_image(char * filename) {
     int fd = open(filename, O_RDONLY);
     if (fd == -1) {
         perror("error opening file");
@@ -21,6 +22,12 @@ BMPImage * rea_bmp_image(char * filename) {
     struct stat file_stat;
     if (fstat(fd, &file_stat) != 0) { 
         perror("error getting file size");
+        close(fd);
+        return NULL;
+    }
+
+    if(file_stat.st_size > MAX_FILE_SIZE) {
+        fprintf(stderr, "File size too large\n");
         close(fd);
         return NULL;
     }
@@ -63,6 +70,9 @@ BMPImage * rea_bmp_image(char * filename) {
 }
 
 void free_bmp_image(BMPImage * image) {//TODO: OJO EL MEMORY LEAK, CUANDO HACEMOS MMAP LO HACEMOS CON EL FILE SIZE DEL ARCHIVO, NO CON EL DEL HEADER
+    if(image == NULL) {
+        return;
+    }
     munmap((void *) image->header, image->header->file_size);
     free(image);
 }
