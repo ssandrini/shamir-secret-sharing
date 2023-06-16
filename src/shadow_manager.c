@@ -17,7 +17,6 @@ static bool detect_cheating(int a_0, int a_1, int b_0, int b_1) {
     return true;
 }
 
-//generate shadow function
 uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
     int block_size = BLOCK_SIZE(k);
     int shadow_size = image_size / (k - 1);
@@ -87,7 +86,6 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
 
 
 uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow_numbers) {
-    
     int secret_size = shadow_size * (k - 1);
     int block_size = BLOCK_SIZE(k);
     uint8_t* secret = (uint8_t*) malloc(sizeof(uint8_t) * secret_size);
@@ -136,7 +134,7 @@ void free_shadows(uint8_t** shadows, int n) {
     free(shadows);
 }
 
-void lsbHide(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits) {
+void hideSecret(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits) {
     for(int i = 0; i < shadowSize; i++) {
         for(int j = 0; j < 8/bits; j++) {
             uint8_t pixel = (shadowImage->data[j] >> bits ) << bits;

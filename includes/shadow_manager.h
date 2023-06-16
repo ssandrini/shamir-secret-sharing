@@ -10,5 +10,5 @@
 uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret);
 void free_shadows(uint8_t** shadows, int n);
 uint8_t * recover_secret(int k, int image_size, uint8_t** shadows, int * shadow_numbers);
-void lsbHide(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits);
+void hideSecret(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits);
 #endif

@@ -8,8 +8,7 @@
 #define ARGS 5
 
 int main(int argc, char *argv[]) {
-    // TODO: sacar todos los printfs que hay en el proyecto
-    // solamente tienen que aparecer si haces --verbose
+    // TODO: Revisar no tener printfs adicionales, en ese caso pasarlos a --verbose
     if (argc != ARGS) {
         fprintf(stderr, "Usage: %s <option> <image> <k> <directory>\n", argv[0]);
         return EXIT_FAILURE;
