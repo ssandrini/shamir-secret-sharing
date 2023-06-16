@@ -39,20 +39,48 @@ Polynom * polynom_from_bytes(uint8_t * bytes, int size) {
     return polynom; 
 }
 
-Polynom * lagrange_interpolate(int * points, int * shadow_numbers, int size) {
-
-    Polynom * polynom = (Polynom *)malloc(sizeof(Polynom));
-    if(polynom == NULL) {
+Polynom * lagrange_interpolate(uint8_t * points, uint8_t * shadow_numbers, int size) {
+    Polynom* polynomial = (Polynom*) malloc(sizeof(Polynom));
+    if(polynomial == NULL) {
         return NULL;
     }
-    polynom->degree = size - 1;
-    polynom->coefficients = (uint8_t*)malloc(size * sizeof(uint8_t)); 
-    if(polynom->coefficients == NULL) {
-        free(polynom);
+    polynomial->degree = size - 1;
+    polynomial->coefficients = (uint8_t*) calloc(size, sizeof(uint8_t));
+    if(polynomial->coefficients == NULL) {
+        free(polynomial);
         return NULL;
     }
 
-    //TODO: IMPLEMENT THIS FUNCTION
+    int k = 0; 
+    int yPrimes[size];
+    while (k < size) {
+        int currentCoefficient = 0;
+        int remaining_coefficients = size - k;
+        for (int i = 0; i<remaining_coefficients; i++) {
+            int y = 0;
+            if(k == 0)
+                y = shadow_numbers[i];
+            else
+                y = MODULAR_ARITHMETIC((yPrimes[i] - polynomial->coefficients[k-1]) * inverses[MODULAR_ARITHMETIC(points[i])]);
+            yPrimes[i] = y;
+            int li = 1; 
+            for (int j=0; j<remaining_coefficients; j++) {
+                if(i != j)
+                    li *= MODULAR_ARITHMETIC(-1*points[j]* inverses[MODULAR_ARITHMETIC(points[i]-points[j])]);
+            }
+            currentCoefficient += MODULAR_ARITHMETIC(y*li);
+        }
+        polynomial->coefficients[k++] = (uint8_t) MODULAR_ARITHMETIC(currentCoefficient); 
+    }
 
-    return polynom;
+    return polynomial; 
+}
+
+void printPolynom(Polynom * polynomial) {
+    printf("Polynomial Degree: %d\n", polynomial->degree);
+    printf("Coefficients: ");
+    for (int i = polynomial->degree; i >= 0; i--) {
+        printf("%d ", polynomial->coefficients[i]);
+    }
+    printf("\n");
 }

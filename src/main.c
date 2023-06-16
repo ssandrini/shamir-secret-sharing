@@ -4,6 +4,7 @@
 #include "bmp.h"
 #include "image_manager.h"
 #include "shadow_manager.h"
+#include "polynom.h"
 
 #define ARGS 5
 
