@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     }
 
     char * option = argv[1]; 
-    char * image = argv[2]; 
+    char * image_path = argv[2]; 
     int k = atoi(argv[3]); 
     char * directory = argv[4];
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     int result = 0;
     if (strcmp(option, "d") == 0) {
-        result = distribute_image(image, k, directory);
+        result = distribute_image(image_path, k, directory);
     } else if (strcmp(option, "r") == 0) {
         // TODO: Implement the recovery logic
     } else {

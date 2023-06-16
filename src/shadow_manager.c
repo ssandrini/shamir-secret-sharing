@@ -139,10 +139,10 @@ void free_shadows(uint8_t** shadows, int n) {
 void lsbHide(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits) {
     for(int i = 0; i < shadowSize; i++) {
         for(int j = 0; j < 8/bits; j++) {
-            uint8_t pixel = (shadowImage->image[j] >> bits ) << bits;
+            uint8_t pixel = (shadowImage->data[j] >> bits ) << bits;
             uint8_t bitsToHide = shadow[i] >> (8 - bits);
             pixel = pixel | bitsToHide;
-            shadowImage->image[j] = pixel;
+            shadowImage->data[j] = pixel;
             shadow[i] = shadow[i] << bits;
         }   
     }

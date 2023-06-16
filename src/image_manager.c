@@ -12,60 +12,83 @@
 #include "shadow_manager.h"
 #define MAX_FILE_PATH 512
 #define FAILURE -1
+#define SUCCESS 0
+#define LSB4 4
+#define LSB2 2
+#define LSB2_MIN_K 5
+#define LSB2_MAX_K 8
+#define LSB4_MIN_K 3
+#define LSB4_MAX_K 4
 
+static int read_shadow_images(char* dirPath, BMPFile** shadow_images, uint64_t image_size);
+static void free_shadow_images(BMPFile** shadows);
 int distribute_image(char* image_path,int k, char* dir) {
-    BMPImage* image = read_bmp_image(image_path);
-    if (image == NULL) {
+    BMPFile* secret_file = read_bmp(image_path);
+    if (secret_file == NULL) {
         fprintf(stderr, "Failed to read BMP image from file: %s\n", image_path);
         return FAILURE;
     }
 
-    uint64_t image_size = image->header->width * image->header->height;
+    uint64_t image_size = secret_file->image->header->width * secret_file->image->header->height;
 
-    if(image_size % (2*k-2) != 0) {
-        fprintf(stderr, "Image size must be divisible by 2k-2\n");
-        free_bmp_image(image);
+    if(image_size % BLOCK_SIZE(k) != 0) {
+        fprintf(stderr, "Image size must be divisible by block size, 2k-2\n");
+        free_bmp(secret_file);
         return FAILURE;
     }
 
-    BMPImage * image_shadows[MAX_N];
-    int n = read_shadow_images(dir, image_shadows, image_size);
+    BMPFile * shadow_images[MAX_N] = {NULL};
+    int n = read_shadow_images(dir, shadow_images, image_size);
     if(n < k || n == -1) {
-        free_bmp_image(image);
-        free_shadow_images(image_shadows);
+        free_bmp(secret_file);
+        free_shadow_images(shadow_images);
         return FAILURE;
     }
 
-    uint8_t ** shadows = generate_shadows(k, n, image_size, image->image);
+    uint8_t ** shadows = generate_shadows(k, n, image_size, secret_file->image->data);
     if(shadows == NULL) {
-        free_bmp_image(image);
-        free_shadow_images(image_shadows);
+        free_bmp(secret_file);
+        free_shadow_images(shadow_images);
         return FAILURE;
     }
-    // TODO: replace magic numbers for constants
-    if ( k <= 4 && k >= 3) {
+
+    if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
         for(int i = 0; i < n; i++) {
-            lsbHide(image_shadows[i], shadows[i], image_size, 4);
-            image->header->reserved1 = i;
+            lsbHide(shadow_images[i]->image, shadows[i], image_size, LSB4);
+            shadow_images[i]->image->header->reserved1 = i;
+            if(msync(shadow_images[i]->map, shadow_images[i]->image->header->file_size, MS_SYNC) == -1) {
+                fprintf(stderr, "msync failed hidding secret image in shadow image %d\n", i);
+                free_bmp(secret_file);
+                free_shadows(shadows, n);
+                free_shadow_images(shadow_images);
+                return FAILURE;
+            }
         }
-        // TODO: sincronizar memory map
-    } else if (k <= 8 && k >= 5) {
+    } else if (k >= LSB2_MIN_K && k <= LSB2_MAX_K) {
         for(int i = 0; i < n; i++) {
-            lsbHide(image_shadows[i], shadows[i], image_size, 2);
-            image->header->reserved1 = i;
+            lsbHide(shadow_images[i]->image, shadows[i], image_size, LSB2);
+            shadow_images[i]->image->header->reserved1 = i;
+            if(msync(shadow_images[i]->map, shadow_images[i]->image->header->file_size, MS_SYNC) == -1) {
+                fprintf(stderr, "msync failed hidding secret image in shadow image %d\n", i);
+                free_bmp(secret_file);
+                free_shadows(shadows, n);
+                free_shadow_images(shadow_images);
+                return FAILURE;
+            }
         }
-        // TODO: sincronizar memory map
     } else {
+        // esto no deberia pasar nunca porque ya lo chequeamos antes
         fprintf(stderr, "Invalid k value. Please choose a value between 3 and 8.\n");
-        return;
+        return FAILURE;
     }
     
-    free_bmp_image(image);
+    free_bmp(secret_file);
     free_shadows(shadows, n);
-    free_shadow_images(image_shadows);
+    free_shadow_images(shadow_images);
+    return SUCCESS;
 }
 
-int read_shadow_images(char* dirPath, BMPImage** shadows, uint64_t image_size) {
+static int read_shadow_images(char* dirPath, BMPFile** shadow_images, uint64_t image_size) {
     DIR* dir;
     struct dirent* entry;
     struct stat fileStat;
@@ -85,10 +108,10 @@ int read_shadow_images(char* dirPath, BMPImage** shadows, uint64_t image_size) {
             return FAILURE;
         }
         if (S_ISREG(fileStat.st_mode)) {
-            BMPImage* image = read_bmp_image(path);
-            if (image != NULL) {
-                shadows[count++] = image;
-            } else if(image->header->width * image->header->height != image_size) {
+            BMPFile* file = read_bmp(path);
+            if (file != NULL) {
+                shadow_images[count++] = file;
+            } else if(file->image->header->width * file->image->header->height != image_size) {
                 fprintf(stderr, "Image size must be the same for all shadow images.\n");
                 return FAILURE;
             } else {
@@ -101,8 +124,8 @@ int read_shadow_images(char* dirPath, BMPImage** shadows, uint64_t image_size) {
     return count;
 }
 
-void free_shadow_images(BMPImage** shadows) {
+static void free_shadow_images(BMPFile** shadows) {
     for (int i = 0; i < MAX_N; i++)
-        free_bmp_image(shadows[i]);
+        free_bmp(shadows[i]);
 }
     

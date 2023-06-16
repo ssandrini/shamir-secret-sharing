@@ -12,7 +12,7 @@
 #define BITMAP_SIGNATURE 0x4D42
 #define MAX_FILE_SIZE 5242880
 
-BMPImage * read_bmp_image(char * filename) {
+BMPFile * read_bmp(char * filename) {
     int fd = open(filename, O_RDONLY);
     if (fd == -1) {
         perror("error opening file");
@@ -32,78 +32,67 @@ BMPImage * read_bmp_image(char * filename) {
         return NULL;
     }
     
-    uint8_t * map = (uint8_t*) mmap(NULL, file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, OFFSET_ZERO);
+    uint8_t * map = (uint8_t*) mmap(NULL, file_stat.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFFSET_ZERO);
     if (map == MAP_FAILED) {
-        perror("mmap");
+        fprintf(stderr, "Error mapping file\n");
         close(fd);
         return NULL;
     }
 
-    
     BMPHeader * bmp_header = (BMPHeader *) map;
-    if (bmp_header->bmp_signature != BITMAP_SIGNATURE) {
-        fprintf(stderr, "Invalid BMP signature\n");
+    if (bmp_header->bmp_signature != BITMAP_SIGNATURE || bmp_header->bits_per_pixel != 8) {
+        fprintf(stderr, "Invalid BMP file\n");
         munmap(map, file_stat.st_size);
         close(fd);
         return NULL;
     }
 
-    if (bmp_header->bits_per_pixel != 8) {
-        fprintf(stderr, "Only 8-bit BMP images are supported");
+    BMPFile * bmp_file = malloc(sizeof(BMPFile));
+    if (bmp_file == NULL) {
+        fprintf(stderr, "Malloc error\n");
         munmap(map, file_stat.st_size);
         close(fd);
         return NULL;
     }
 
-    BMPImage * bmpImage = malloc(sizeof(BMPImage));
-    if (bmpImage == NULL) {
-        perror("malloc error");
-        munmap(map, file_stat.st_size);
-        close(fd);
-        return NULL;
-    }
-    bmpImage->header = bmp_header;
-    bmpImage->image = map + bmpImage->header->data_offset;
+    bmp_file->map = map;
+    bmp_file->fd = fd;
+    bmp_file->image->header = bmp_header;
+    bmp_file->image->data = bmp_file->map + bmp_header->data_offset;
+    
     close(fd);
 
-    return bmpImage; 
+    return bmp_file; 
 }
 
-void free_bmp_image(BMPImage * image) {//TODO: OJO EL MEMORY LEAK, CUANDO HACEMOS MMAP LO HACEMOS CON EL FILE SIZE DEL ARCHIVO, NO CON EL DEL HEADER
-    if(image == NULL) {
+void free_bmp(BMPFile * file) {
+    if(file == NULL) {
         return;
     }
-    munmap((void *) image->header, image->header->file_size);
-    free(image);
+    munmap(file->map, file->image->header->file_size);
+    close(file->fd); 
+    free(file);
 }
 
 void dump_bmp_image(BMPImage * bmp, const char * path){
     
-    // Open file for writing
     FILE* file = fopen(path, "wb");
     if (file == NULL) {
         fprintf(stderr, "Error: could not open file for writing\n");
         return;
     }
-    
-    // printf("Data offset: %d\n", bmp->header->data_offset);
+ 
     fwrite(bmp->header, bmp->header->data_offset, 1, file);
 
     int width = bmp->header->width;
     int height = bmp->header->height;
     int padding = (4 - (width % 4)) % 4;
-    uint8_t* data = bmp->image;
-    // printf("width: %d\n", width);
-    // printf("height: %d\n", height);
-    // printf("padding: %d\n", padding);
+    uint8_t* data = bmp->data;
     int y = 0, x = 0, i = 0;
     for (y = 0; y < height; y++) { 
         for (x = 0; x < width; x++) {
             uint8_t pixel = *(data + y*(width + padding) + x);
             fwrite(&pixel, sizeof(uint8_t), 1, file);
-            if(y == height-1) {
-                // printf("pixel: %d, x:%d\n", pixel, x);
-            }
         }
         uint8_t padding_byte = 0x00;
         for (i = 0; i < padding; i++) {

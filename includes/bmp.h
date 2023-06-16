@@ -43,12 +43,18 @@ typedef struct  __attribute__((__packed__)) BMPHeader {
 
 typedef struct BMPImage {
     BMPHeader * header; 
-    uint8_t * image;
+    uint8_t * data;
 } BMPImage;
 
-BMPImage * read_bmp_image(char * filename);
-void free_bmp_image(BMPImage * image);
-void dump_bmp_image(BMPImage * image, const char * output_path);
+typedef struct BMPFile {
+    BMPImage * image;
+    int fd;
+    uint8_t * map;
+} BMPFile;
+
+BMPFile * read_bmp(char * filename);
+void free_bmp(BMPFile * file);
+void dump_bmp(BMPImage * image, const char * output_path);
 
 
 #endif // __BMP_H__
