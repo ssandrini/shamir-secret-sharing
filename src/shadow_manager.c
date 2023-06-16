@@ -134,13 +134,13 @@ void free_shadows(uint8_t** shadows, int n) {
     free(shadows);
 }
 
-void hideSecret(BMPImage * shadowImage, uint8_t * shadow, int shadowSize, int bits) {
-    for(int i = 0; i < shadowSize; i++) {
+void hide_secret(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits) {
+    for(int i = 0; i < shadow_size; i++) {
         for(int j = 0; j < 8/bits; j++) {
-            uint8_t pixel = (shadowImage->data[j] >> bits ) << bits;
+            uint8_t pixel = (shadow_image->data[j] >> bits ) << bits;
             uint8_t bitsToHide = shadow[i] >> (8 - bits);
             pixel = pixel | bitsToHide;
-            shadowImage->data[j] = pixel;
+            shadow_image->data[j] = pixel;
             shadow[i] = shadow[i] << bits;
         }   
     }

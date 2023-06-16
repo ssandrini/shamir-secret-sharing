@@ -54,7 +54,7 @@ int distribute_image(char* image_path,int k, char* dir) {
 
     if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
         for(int i = 0; i < n; i++) {
-            hideSecret(shadow_images[i]->image, shadows[i], image_size, LSB4);
+            hide_secret(shadow_images[i]->image, shadows[i], image_size, LSB4);
             shadow_images[i]->image->header->reserved1 = i;
             if(msync(shadow_images[i]->map, shadow_images[i]->image->header->file_size, MS_SYNC) == -1) {
                 fprintf(stderr, "msync failed hidding secret image in shadow image %d\n", i);
@@ -66,7 +66,7 @@ int distribute_image(char* image_path,int k, char* dir) {
         }
     } else if (k >= LSB2_MIN_K && k <= LSB2_MAX_K) {
         for(int i = 0; i < n; i++) {
-            hideSecret(shadow_images[i]->image, shadows[i], image_size, LSB2);
+            hide_secret(shadow_images[i]->image, shadows[i], image_size, LSB2);
             shadow_images[i]->image->header->reserved1 = i;
             if(msync(shadow_images[i]->map, shadow_images[i]->image->header->file_size, MS_SYNC) == -1) {
                 fprintf(stderr, "msync failed hidding secret image in shadow image %d\n", i);
