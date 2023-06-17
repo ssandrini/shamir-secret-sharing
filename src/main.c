@@ -8,6 +8,8 @@
 
 #define ARGS 5
 
+// TODO CARPETA BIN NO SE CREA, HACE QUE NO COMPILE
+
 int main(int argc, char *argv[]) {
     // TODO: Revisar no tener printfs adicionales, en ese caso pasarlos a --verbose
     if (argc != ARGS) {

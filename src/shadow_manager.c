@@ -104,8 +104,10 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * sh
         }
 
         Polynom * f = lagrange_interpolate(m_j, shadow_numbers, k);
+
         Polynom * g = lagrange_interpolate(d_j, shadow_numbers, k);
         if(f == NULL || g == NULL) {
+            fprintf(stderr, "Error allocating memory for polynom\n");
             polynom_destroy(f);
             polynom_destroy(g);
             free(secret);
