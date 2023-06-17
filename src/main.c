@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(option, "d") == 0) {
         result = distribute_image(image_path, k, directory);
     } else if (strcmp(option, "r") == 0) {
-        // TODO: Implement the recovery logic
+        result = recover_image(image_path, k, directory);
     } else {
         fprintf(stderr, "Invalid option. Please choose 'd' or 'r'.\n");
         return EXIT_FAILURE;

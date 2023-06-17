@@ -20,9 +20,10 @@
 #define LSB4_MIN_K 3
 #define LSB4_MAX_K 4
 
-static int read_shadow_images(char* dirPath, BMPFile** shadow_images, uint64_t image_size);
+static int read_shadow_images(char* dirPath, BMPFile** shadow_images);
 static void free_shadow_images(BMPFile** shadows);
-int distribute_image(char* image_path,int k, char* dir) {
+
+int distribute_image(char* image_path, int k, char* dir) {
     BMPFile* secret_file = read_bmp(image_path);
     if (secret_file == NULL) {
         fprintf(stderr, "Failed to read BMP image from file: %s\n", image_path);
@@ -38,11 +39,21 @@ int distribute_image(char* image_path,int k, char* dir) {
     }
 
     BMPFile * shadow_images[MAX_N] = {NULL};
-    int n = read_shadow_images(dir, shadow_images, image_size);
+    int n = read_shadow_images(dir, shadow_images);
     if(n < k || n == -1) {
+        fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
         free_bmp(secret_file);
         free_shadow_images(shadow_images);
         return FAILURE;
+    }
+    
+    for(int i = 0; i < n; i++) {
+        if(shadow_images[i]->image->header->width != secret_file->image->header->width || shadow_images[i]->image->header->height != secret_file->image->header->height) {
+            fprintf(stderr, "Shadow image %d has different size than secret image\n", i);
+            free_bmp(secret_file);
+            free_shadow_images(shadow_images);
+            return FAILURE;
+        }
     }
 
     uint8_t ** shadows = generate_shadows(k, n, image_size, secret_file->image->data);
@@ -88,7 +99,57 @@ int distribute_image(char* image_path,int k, char* dir) {
     return SUCCESS;
 }
 
-static int read_shadow_images(char* dirPath, BMPFile** shadow_images, uint64_t image_size) {
+int recover_image(char * image_path, int k, char* dir) {
+    BMPFile * shadow_images[MAX_N] = {NULL};
+    int n = read_shadow_images(dir, shadow_images);
+    if(n < k ) {
+        fprintf(stderr, "Need at least k shadow images to recover secret image\n");
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    } else if(n == -1) {
+        fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
+
+    int secret_image_size = shadow_images[0]->image->header->width * shadow_images[0]->image->header->height;
+    if(secret_image_size % BLOCK_SIZE(k) != 0) {
+        fprintf(stderr, "Image size must be divisible by block size, 2k-2\n");
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
+
+    for(int i = 1; i < n; i++) {
+        if(shadow_images[i]->image->header->width != shadow_images[0]->image->header->width ||
+           shadow_images[i]->image->header->height != shadow_images[0]->image->header->height) {
+            fprintf(stderr, "Shadow image %d has different size than shadow image 0\n", i);
+            free_shadow_images(shadow_images);
+            return FAILURE;
+        }
+    }
+
+    // TODO: aca con agarrar k shadows y el secret image size deberia ser suficiente
+    uint8_t ** shadows = malloc(sizeof(uint8_t*) * n);
+    for(int i = 0; i < n; i++) {
+        shadows[i] = malloc(sizeof(uint8_t) * secret_image_size);
+        if(shadows[i] == NULL) {
+            fprintf(stderr, "Failed to allocate memory for shadow %d\n", i);
+            free_shadows(shadows, i);
+            free_shadow_images(shadow_images);
+            return FAILURE;
+        }
+    }
+
+    // TODO: hay que agarrar el numero de shadow que esta en el reserved1 de cada shadow image
+    // TODO: recuperar las shadows de los shadow images
+    // TODO: reconstruir la imagen secreta
+    // TODO: dump de la imagen secreta
+    // TODO: free de todo
+
+    return SUCCESS;
+}
+
+static int read_shadow_images(char* dirPath, BMPFile** shadow_images) {
     DIR* dir;
     struct dirent* entry;
     struct stat fileStat;
@@ -111,9 +172,6 @@ static int read_shadow_images(char* dirPath, BMPFile** shadow_images, uint64_t i
             BMPFile* file = read_bmp(path);
             if (file != NULL) {
                 shadow_images[count++] = file;
-            } else if(file->image->header->width * file->image->header->height != image_size) {
-                fprintf(stderr, "Image size must be the same for all shadow images.\n");
-                return FAILURE;
             } else {
                 fprintf(stderr, "Failed to read BMP image from file: %s\n", path);
                 return FAILURE;

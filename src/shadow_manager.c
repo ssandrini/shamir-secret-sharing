@@ -47,7 +47,7 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
         a_0 = MODULAR_ARITHMETIC(a_0) ? MODULAR_ARITHMETIC(a_0) : 1;
         a_1 = MODULAR_ARITHMETIC(a_1) ? MODULAR_ARITHMETIC(a_1) : 1;
 
-        Polynom * f = polynom_from_bytes(secret, k);
+        Polynom * f = create_polynom(secret, k);
         if(f == NULL) {
             fprintf(stderr, "Error allocating memory for polynom\n");
             free_shadows(shadows, n);
@@ -59,7 +59,7 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
         uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * a_0); // riai,0 + bi,0 = 0
         uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * a_1); // riai,1 + bi,1 = 0
 
-        Polynom * g = polynom_from_bytes(secret + i + k - 2, k); // i + k - 2 for b_0 and b_1
+        Polynom * g = create_polynom(secret + i + k - 2, k); // i + k - 2 for b_0 and b_1
         if(g == NULL) {
             fprintf(stderr, "Error allocating memory for polynom\n");
             polynom_destroy(f);
@@ -84,8 +84,7 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
     return shadows;
 }
 
-
-uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow_numbers) {
+uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * shadow_numbers) {
     int secret_size = shadow_size * (k - 1);
     int block_size = BLOCK_SIZE(k);
     uint8_t* secret = (uint8_t*) malloc(sizeof(uint8_t) * secret_size);
@@ -96,8 +95,8 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow
 
     int secret_i = 0;
     for (int block_i = 0; block_i < shadow_size; block_i += 2) {
-        int m_j[k];
-        int d_j[k];
+        uint8_t m_j[k];
+        uint8_t d_j[k];
 
         for (int i = 0; i < k; i++) {
             m_j[i] = shadows[i][block_i];
@@ -106,6 +105,12 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, int * shadow
 
         Polynom * f = lagrange_interpolate(m_j, shadow_numbers, k);
         Polynom * g = lagrange_interpolate(d_j, shadow_numbers, k);
+        if(f == NULL || g == NULL) {
+            polynom_destroy(f);
+            polynom_destroy(g);
+            free(secret);
+            return NULL;
+        }
 
         if (detect_cheating(f->coefficients[0], f->coefficients[1], g->coefficients[0], g->coefficients[1])) {
             polynom_destroy(f);

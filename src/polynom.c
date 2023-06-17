@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "polynom.h"
+
 
 uint8_t evaluate_polynom(Polynom * polynom, int x) {
     int result = 0;
@@ -21,7 +23,7 @@ void polynom_destroy(Polynom * polynom) {
     free(polynom);
 }
 
-Polynom * polynom_from_bytes(uint8_t * bytes, int size) {
+Polynom * create_polynom(uint8_t * bytes, int size) {
     Polynom * polynom = (Polynom *)malloc(sizeof(Polynom));
     if(polynom == NULL) {
         return NULL;
@@ -42,11 +44,13 @@ Polynom * polynom_from_bytes(uint8_t * bytes, int size) {
 Polynom * lagrange_interpolate(uint8_t * points, uint8_t * shadow_numbers, int size) {
     Polynom* polynomial = (Polynom*) malloc(sizeof(Polynom));
     if(polynomial == NULL) {
+        fprintf(stderr, "Error allocating memory for polynom\n");
         return NULL;
     }
     polynomial->degree = size - 1;
     polynomial->coefficients = (uint8_t*) calloc(size, sizeof(uint8_t));
     if(polynomial->coefficients == NULL) {
+        fprintf(stderr, "Error allocating memory for coefficients\n");
         free(polynomial);
         return NULL;
     }
