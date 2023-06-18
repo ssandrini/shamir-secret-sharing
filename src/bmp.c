@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
+#include <errno.h>
 #define OFFSET_ZERO 0
 #define BITMAP_SIGNATURE 0x4D42
 #define MAX_FILE_SIZE 5242880
@@ -15,13 +15,13 @@
 BMPFile * read_bmp(char * filename) {
     int fd = open(filename, O_RDONLY);
     if (fd == -1) {
-        perror("error opening file");
+        fprintf(stderr, "error opening file");
         return NULL;
     }
     
     struct stat file_stat;
     if (fstat(fd, &file_stat) != 0) { 
-        perror("error getting file size");
+        fprintf(stderr, "error getting file size");
         close(fd);
         return NULL;
     }
@@ -35,6 +35,9 @@ BMPFile * read_bmp(char * filename) {
     uint8_t * map = (uint8_t*) mmap(NULL, file_stat.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFFSET_ZERO);
     if (map == MAP_FAILED) {
         fprintf(stderr, "Error mapping file\n");
+        // check ERRNO
+        perror("Error");
+
         close(fd);
         return NULL;
     }

@@ -103,12 +103,13 @@ int recover_image(char * image_path, int k, char* dir) {
     // TODO: chequeo del K
     BMPFile * shadow_images[MAX_N] = {NULL};
     int n = read_shadow_images(dir, shadow_images);
-    if(n < k ) {
-        fprintf(stderr, "Need at least k shadow images to recover secret image\n");
+    printf("n: %d\n", n);
+    if(n == -1 ) {
+        fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
         free_shadow_images(shadow_images);
         return FAILURE;
-    } else if(n == -1) {
-        fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
+    } else if(n < k) {
+        fprintf(stderr, "Need at least k shadow images to recover secret image\n");
         free_shadow_images(shadow_images);
         return FAILURE;
     }
@@ -210,8 +211,10 @@ static int read_shadow_images(char* dirPath, BMPFile** shadow_images) {
     while ((entry = readdir(dir)) != NULL) {
         char path[MAX_FILE_PATH];
         snprintf(path, MAX_FILE_PATH, "%s/%s", dirPath, entry->d_name);
+        printf("Reading file: %s\n", path);
         if (stat(path, &fileStat) < 0) {
             fprintf(stderr, "Error reading file stats.\n");
+            closedir(dir);
             return FAILURE;
         }
         if (S_ISREG(fileStat.st_mode)) {
@@ -220,6 +223,7 @@ static int read_shadow_images(char* dirPath, BMPFile** shadow_images) {
                 shadow_images[count++] = file;
             } else {
                 fprintf(stderr, "Failed to read BMP image from file: %s\n", path);
+                closedir(dir);
                 return FAILURE;
             }
         }
@@ -229,7 +233,8 @@ static int read_shadow_images(char* dirPath, BMPFile** shadow_images) {
 }
 
 static void free_shadow_images(BMPFile** shadows) {
-    for (int i = 0; i < MAX_N; i++)
+    for (int i = 0; i < MAX_N; i++) {
         free_bmp(shadows[i]);
+    }
 }
     
