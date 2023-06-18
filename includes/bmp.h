@@ -54,7 +54,7 @@ typedef struct BMPFile {
 
 BMPFile * read_bmp(char * filename);
 void free_bmp(BMPFile * file);
-void dump_bmp(BMPImage * image, const char * output_path);
+int dump_bmp_image(BMPImage * image, const char * output_path);
 
 
 #endif // __BMP_H__

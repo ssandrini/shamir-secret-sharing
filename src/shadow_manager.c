@@ -152,3 +152,14 @@ void hide_secret(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int
         }   
     }
 }
+
+void recover_shadow(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits) {
+    for(int i = 0; i < shadow_size; i++) {
+        for(int j = 0; j < 8/bits; j++) {
+            uint8_t pixel = shadow_image->data[j];
+            uint8_t bitsToRecover = pixel << (8 - bits);
+            bitsToRecover = bitsToRecover >> (bits * j);
+            shadow[i] = shadow[i] | bitsToRecover;
+        }
+    }
+}

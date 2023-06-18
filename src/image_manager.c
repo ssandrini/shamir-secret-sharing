@@ -100,6 +100,7 @@ int distribute_image(char* image_path, int k, char* dir) {
 }
 
 int recover_image(char * image_path, int k, char* dir) {
+    // TODO: chequeo del K
     BMPFile * shadow_images[MAX_N] = {NULL};
     int n = read_shadow_images(dir, shadow_images);
     if(n < k ) {
@@ -128,24 +129,69 @@ int recover_image(char * image_path, int k, char* dir) {
         }
     }
 
-    // TODO: aca con agarrar k shadows y el secret image size deberia ser suficiente
-    uint8_t ** shadows = malloc(sizeof(uint8_t*) * n);
-    for(int i = 0; i < n; i++) {
-        shadows[i] = malloc(sizeof(uint8_t) * secret_image_size);
+    uint8_t ** shadows = malloc(sizeof(uint8_t*) * k);
+    if(shadows == NULL) {
+        fprintf(stderr, "Failed to allocate memory for shadows\n");
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
+
+    uint8_t * shadows_ids = malloc(sizeof(uint8_t) * k);
+    if(shadows_ids == NULL) {
+        fprintf(stderr, "Failed to allocate memory for shadows ids\n");
+        free(shadows);
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
+
+    for(int i = 0; i < k; i++) {
+        shadows[i] = malloc(sizeof(uint8_t) * secret_image_size / (k - 1));
         if(shadows[i] == NULL) {
             fprintf(stderr, "Failed to allocate memory for shadow %d\n", i);
             free_shadows(shadows, i);
             free_shadow_images(shadow_images);
             return FAILURE;
         }
+
+        int bits_lsb = LSB2;
+        if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
+            bits_lsb = LSB4;
+        }
+        recover_shadow(shadow_images[i]->image, shadows[i], secret_image_size / (k - 1), bits_lsb);
+        shadows_ids[i] = shadow_images[i]->image->header->reserved1;
     }
 
-    // TODO: hay que agarrar el numero de shadow que esta en el reserved1 de cada shadow image
-    // TODO: recuperar las shadows de los shadow images
-    // TODO: reconstruir la imagen secreta
-    // TODO: dump de la imagen secreta
-    // TODO: free de todo
+    uint8_t * secret_image = recover_secret(k, secret_image_size, shadows, shadows_ids);
+    if(secret_image == NULL) {
+        fprintf(stderr, "Failed to recover secret image\n");
+        free_shadows(shadows, k);
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
 
+    BMPFile * secret_file = malloc(sizeof(BMPFile));
+    if(secret_file == NULL) {
+        fprintf(stderr, "Failed to allocate memory for secret file\n");
+        free_shadows(shadows, k);
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
+    
+    secret_file->image->data = secret_image;
+    secret_file->image->header = shadow_images[0]->image->header;
+
+    if(dump_bmp_image(secret_file->image, image_path) == FAILURE) {
+        fprintf(stderr, "Failed to dump secret image\n");
+        free_bmp(secret_file);
+        free_shadows(shadows, k);
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    }
+
+    free_bmp(secret_file);
+    free_shadows(shadows, k);
+    free_shadow_images(shadow_images);
+    
     return SUCCESS;
 }
 

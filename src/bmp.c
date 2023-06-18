@@ -74,12 +74,11 @@ void free_bmp(BMPFile * file) {
     free(file);
 }
 
-void dump_bmp_image(BMPImage * bmp, const char * path){
-    
+int dump_bmp_image(BMPImage * bmp, const char * path) {
     FILE* file = fopen(path, "wb");
     if (file == NULL) {
         fprintf(stderr, "Error: could not open file for writing\n");
-        return;
+        return -1;
     }
  
     fwrite(bmp->header, bmp->header->data_offset, 1, file);
@@ -101,5 +100,6 @@ void dump_bmp_image(BMPImage * bmp, const char * path){
     }
 
     fclose(file);
+    return 0;
 }
 
