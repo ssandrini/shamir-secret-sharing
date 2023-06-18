@@ -13,7 +13,7 @@
 #define MAX_FILE_SIZE 5242880
 
 BMPFile * read_bmp(char * filename) {
-    int fd = open(filename, O_RDONLY);
+    int fd = open(filename, O_RDWR);
     if (fd == -1) {
         fprintf(stderr, "error opening file");
         return NULL;
@@ -50,7 +50,7 @@ BMPFile * read_bmp(char * filename) {
         return NULL;
     }
 
-    BMPFile * bmp_file = malloc(sizeof(BMPFile));
+    BMPFile * bmp_file = (BMPFile *) malloc(sizeof(BMPFile));
     if (bmp_file == NULL) {
         fprintf(stderr, "Malloc error\n");
         munmap(map, file_stat.st_size);
@@ -58,12 +58,19 @@ BMPFile * read_bmp(char * filename) {
         return NULL;
     }
 
+    bmp_file->image = (BMPImage *) malloc(sizeof(BMPImage));
+    if (bmp_file->image == NULL) {
+        fprintf(stderr, "Malloc error\n");
+        munmap(map, file_stat.st_size);
+        close(fd);
+        free(bmp_file);
+        return NULL;
+    }
+
     bmp_file->map = map;
     bmp_file->fd = fd;
     bmp_file->image->header = bmp_header;
     bmp_file->image->data = bmp_file->map + bmp_header->data_offset;
-    
-    close(fd);
 
     return bmp_file; 
 }
@@ -73,16 +80,20 @@ void free_bmp(BMPFile * file) {
         return;
     }
     munmap(file->map, file->image->header->file_size);
+    free(file->image);
     close(file->fd); 
     free(file);
 }
 
 int dump_bmp_image(BMPImage * bmp, const char * path) {
+    printf("path: %s\n", path);
     FILE* file = fopen(path, "wb");
     if (file == NULL) {
         fprintf(stderr, "Error: could not open file for writing\n");
+        perror("Error");
         return -1;
     }
+    printf("Dumping image to %s\n", path);
  
     fwrite(bmp->header, bmp->header->data_offset, 1, file);
 

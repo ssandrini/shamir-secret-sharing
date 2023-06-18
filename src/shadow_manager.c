@@ -93,8 +93,7 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * sh
         return NULL;
     }
 
-    int secret_i = 0;
-    for (int block_i = 0; block_i < shadow_size; block_i += 2) {
+    for (int block_i = 0, secret_i = 0; block_i < shadow_size ; block_i += 2, secret_i++) {
         uint8_t m_j[k];
         uint8_t d_j[k];
 
@@ -103,9 +102,8 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * sh
             d_j[i] = shadows[i][block_i + 1];
         }
 
-        Polynom * f = lagrange_interpolate(m_j, shadow_numbers, k);
-
-        Polynom * g = lagrange_interpolate(d_j, shadow_numbers, k);
+        Polynom * f = lagrange_interpolate(shadow_numbers, m_j, k);
+        Polynom * g = lagrange_interpolate(shadow_numbers, d_j, k);
         if(f == NULL || g == NULL) {
             fprintf(stderr, "Error allocating memory for polynom\n");
             polynom_destroy(f);
@@ -117,6 +115,8 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * sh
         if (detect_cheating(f->coefficients[0], f->coefficients[1], g->coefficients[0], g->coefficients[1])) {
             polynom_destroy(f);
             polynom_destroy(g);
+            free(secret);
+            fprintf(stderr, "Cheating detected\n");
             return NULL;
         }
 
@@ -126,11 +126,9 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * sh
         for (int i = 2; i < k; i++)
             secret[secret_i * block_size + i + k - 2] = g->coefficients[i];
 
-        secret_i++;
         polynom_destroy(f);
         polynom_destroy(g);
     }
-
     return secret;
 }
 
@@ -142,24 +140,27 @@ void free_shadows(uint8_t** shadows, int n) {
 }
 
 void hide_secret(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits) {
+    int k = 0;
     for(int i = 0; i < shadow_size; i++) {
         for(int j = 0; j < 8/bits; j++) {
-            uint8_t pixel = (shadow_image->data[j] >> bits ) << bits;
+            uint8_t pixel = (shadow_image->data[k] >> bits ) << bits;
             uint8_t bitsToHide = shadow[i] >> (8 - bits);
             pixel = pixel | bitsToHide;
-            shadow_image->data[j] = pixel;
+            shadow_image->data[k++] = pixel;
             shadow[i] = shadow[i] << bits;
         }   
     }
 }
 
 void recover_shadow(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits) {
+    int k = 0;
     for(int i = 0; i < shadow_size; i++) {
+        shadow[i] = 0;
         for(int j = 0; j < 8/bits; j++) {
-            uint8_t pixel = shadow_image->data[j];
-            uint8_t bitsToRecover = pixel << (8 - bits);
-            bitsToRecover = bitsToRecover >> (bits * j);
-            shadow[i] = shadow[i] | bitsToRecover;
+            uint8_t pixel = shadow_image->data[k++];
+            uint8_t recoveredBits = pixel << (8 - bits);
+            recoveredBits = recoveredBits >> (8 - bits);
+            shadow[i] = (shadow[i] << bits) | recoveredBits;
         }
     }
 }

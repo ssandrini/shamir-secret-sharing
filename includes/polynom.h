@@ -47,7 +47,7 @@ void polynom_destroy(Polynom * polynom);
 */
 Polynom * create_polynom(uint8_t * bytes, int size);
 
-Polynom * lagrange_interpolate(uint8_t * points, uint8_t * shadow_numbers, int size);
+Polynom * lagrange_interpolate(uint8_t * points, uint8_t * y_values, int size);
 
 void printPolynom(Polynom * polynomial);
 

@@ -66,7 +66,7 @@ int distribute_image(char* image_path, int k, char* dir) {
     if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
         for(int i = 0; i < n; i++) {
             hide_secret(shadow_images[i]->image, shadows[i], image_size, LSB4);
-            shadow_images[i]->image->header->reserved1 = i;
+            shadow_images[i]->image->header->reserved1 = i+1;
             if(msync(shadow_images[i]->map, shadow_images[i]->image->header->file_size, MS_SYNC) == -1) {
                 fprintf(stderr, "msync failed hidding secret image in shadow image %d\n", i);
                 free_bmp(secret_file);
@@ -78,7 +78,7 @@ int distribute_image(char* image_path, int k, char* dir) {
     } else if (k >= LSB2_MIN_K && k <= LSB2_MAX_K) {
         for(int i = 0; i < n; i++) {
             hide_secret(shadow_images[i]->image, shadows[i], image_size, LSB2);
-            shadow_images[i]->image->header->reserved1 = i;
+            shadow_images[i]->image->header->reserved1 = i+1;
             if(msync(shadow_images[i]->map, shadow_images[i]->image->header->file_size, MS_SYNC) == -1) {
                 fprintf(stderr, "msync failed hidding secret image in shadow image %d\n", i);
                 free_bmp(secret_file);
@@ -103,7 +103,6 @@ int recover_image(char * image_path, int k, char* dir) {
     // TODO: chequeo del K
     BMPFile * shadow_images[MAX_N] = {NULL};
     int n = read_shadow_images(dir, shadow_images);
-    printf("n: %d\n", n);
     if(n == -1 ) {
         fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
         free_shadow_images(shadow_images);
@@ -145,28 +144,31 @@ int recover_image(char * image_path, int k, char* dir) {
         return FAILURE;
     }
 
+    int bits_lsb = LSB2;
+    if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
+        bits_lsb = LSB4;
+    }
+
     for(int i = 0; i < k; i++) {
         shadows[i] = malloc(sizeof(uint8_t) * secret_image_size / (k - 1));
         if(shadows[i] == NULL) {
             fprintf(stderr, "Failed to allocate memory for shadow %d\n", i);
             free_shadows(shadows, i);
             free_shadow_images(shadow_images);
+            free(shadows_ids);
             return FAILURE;
         }
 
-        int bits_lsb = LSB2;
-        if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
-            bits_lsb = LSB4;
-        }
         recover_shadow(shadow_images[i]->image, shadows[i], secret_image_size / (k - 1), bits_lsb);
         shadows_ids[i] = shadow_images[i]->image->header->reserved1;
     }
 
-    uint8_t * secret_image = recover_secret(k, secret_image_size, shadows, shadows_ids);
+    uint8_t * secret_image = recover_secret(k, secret_image_size / (k - 1), shadows, shadows_ids);
     if(secret_image == NULL) {
         fprintf(stderr, "Failed to recover secret image\n");
         free_shadows(shadows, k);
         free_shadow_images(shadow_images);
+        free(shadows_ids);
         return FAILURE;
     }
 
@@ -175,6 +177,17 @@ int recover_image(char * image_path, int k, char* dir) {
         fprintf(stderr, "Failed to allocate memory for secret file\n");
         free_shadows(shadows, k);
         free_shadow_images(shadow_images);
+        free(shadows_ids);
+        return FAILURE;
+    }
+
+    secret_file->image = (BMPImage*) malloc(sizeof(BMPImage));
+    if(secret_file->image == NULL) {
+        fprintf(stderr, "Failed to allocate memory for secret image\n");
+        free_bmp(secret_file);
+        free_shadows(shadows, k);
+        free_shadow_images(shadow_images);
+        free(shadows_ids);
         return FAILURE;
     }
     
@@ -186,12 +199,16 @@ int recover_image(char * image_path, int k, char* dir) {
         free_bmp(secret_file);
         free_shadows(shadows, k);
         free_shadow_images(shadow_images);
+        free(shadows_ids);
+        free(secret_image);
         return FAILURE;
     }
 
     free_bmp(secret_file);
     free_shadows(shadows, k);
     free_shadow_images(shadow_images);
+    free(shadows_ids);
+    free(secret_image);
     
     return SUCCESS;
 }
