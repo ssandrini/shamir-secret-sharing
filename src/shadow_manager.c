@@ -38,8 +38,8 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
     }
     // The dealer divides I into t-non-overlapping 2k − 2-pixel blocks, B1, B2, ..., Bt.
     // For each iteration generate shadow_i byte and shadow_i + 1 byte for each shadow in shadows
-    int shadow_i = 0;
-    for (int i = 0; i < image_size; i += block_size) {
+
+    for (int shadow_i = 0, i = 0; i < image_size; i += block_size, shadow_i += 2) {
         uint8_t a_0 = secret[i];
         uint8_t a_1 = secret[i+1];
 
@@ -75,7 +75,6 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
             shadows[j][shadow_i] = evaluate_polynom(f, j + 1);
             shadows[j][shadow_i + 1] = evaluate_polynom(g, j + 1);
         }
-        shadow_i += 2;
 
         polynom_destroy(f);
         polynom_destroy(g);
