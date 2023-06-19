@@ -143,8 +143,8 @@ void hide_secret(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int
     for(int i = 0; i < shadow_size; i++) {
         for(int j = 0; j < 8/bits; j++) {
             uint8_t pixel = (shadow_image->data[k] >> bits ) << bits;
-            uint8_t bitsToHide = shadow[i] >> (8 - bits);
-            pixel = pixel | bitsToHide;
+            uint8_t bits_to_hide = shadow[i] >> (8 - bits);
+            pixel = pixel | bits_to_hide;
             shadow_image->data[k++] = pixel;
             shadow[i] = shadow[i] << bits;
         }   
