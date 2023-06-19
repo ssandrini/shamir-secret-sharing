@@ -56,31 +56,31 @@ Polynom * lagrange_interpolate(uint8_t * points, uint8_t * y_values, int size) {
     }
 
     int k = 0; 
-    int yPrimes[size];
+    int y_primes[size];
     while (k < size) {
-        int currentCoefficient = 0;
+        int current_coefficient = 0;
         int remaining_coefficients = size - k;
         for (int i = 0; i<remaining_coefficients; i++) {
             int y = 0;
             if(k == 0)
                 y = MODULAR_ARITHMETIC(y_values[i]);
             else
-                y = MODULAR_ARITHMETIC((yPrimes[i] - polynomial->coefficients[k-1]) * inverses[MODULAR_ARITHMETIC(points[i])]);
-            yPrimes[i] = y;
+                y = MODULAR_ARITHMETIC((y_primes[i] - polynomial->coefficients[k-1]) * inverses[MODULAR_ARITHMETIC(points[i])]);
+            y_primes[i] = y;
             int li = 1; 
             for (int j=0; j<remaining_coefficients; j++) {
                 if(i != j)
                     li = MODULAR_ARITHMETIC( li * MODULAR_ARITHMETIC(-1*points[j]* inverses[MODULAR_ARITHMETIC(points[i]-points[j])]));
             }
-            currentCoefficient = MODULAR_ARITHMETIC(currentCoefficient + MODULAR_ARITHMETIC(y*li));
+            current_coefficient = MODULAR_ARITHMETIC(current_coefficient + MODULAR_ARITHMETIC(y*li));
         }
-        polynomial->coefficients[k++] = (uint8_t) MODULAR_ARITHMETIC(currentCoefficient); 
+        polynomial->coefficients[k++] = (uint8_t) MODULAR_ARITHMETIC(current_coefficient); 
     }
 
     return polynomial; 
 }
 
-void printPolynom(Polynom * polynomial) {
+void print_polynom(Polynom * polynomial) {
     printf("Polynomial Degree: %d\n", polynomial->degree);
     printf("Coefficients: ");
     for (int i = polynomial->degree; i >= 0; i--) {

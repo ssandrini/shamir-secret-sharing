@@ -157,9 +157,9 @@ void recover_shadow(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, 
         shadow[i] = 0;
         for(int j = 0; j < 8/bits; j++) {
             uint8_t pixel = shadow_image->data[k++];
-            uint8_t recoveredBits = pixel << (8 - bits);
-            recoveredBits = recoveredBits >> (8 - bits);
-            shadow[i] = (shadow[i] << bits) | recoveredBits;
+            uint8_t recovered_bits = pixel << (8 - bits);
+            recovered_bits = recovered_bits >> (8 - bits);
+            shadow[i] = (shadow[i] << bits) | recovered_bits;
         }
     }
 }

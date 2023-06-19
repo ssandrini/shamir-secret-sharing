@@ -20,7 +20,7 @@
 #define LSB4_MIN_K 3
 #define LSB4_MAX_K 4
 
-static int read_shadow_images(char* dirPath, BMPFile** shadow_images);
+static int read_shadow_images(char* dir_path, BMPFile** shadow_images);
 static void free_shadow_images(BMPFile** shadows);
 
 int distribute_image(char* image_path, int k, char* dir) {
@@ -40,7 +40,6 @@ int distribute_image(char* image_path, int k, char* dir) {
 
     BMPFile * shadow_images[MAX_N] = {NULL};
     int n = read_shadow_images(dir, shadow_images);
-    printf("n = %d\n", n);
     if(n < k || n == -1) {
         fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
         free_bmp(secret_file);
@@ -214,12 +213,12 @@ int recover_image(char * image_path, int k, char* dir) {
     return SUCCESS;
 }
 
-static int read_shadow_images(char* dirPath, BMPFile** shadow_images) {
+static int read_shadow_images(char* dir_path, BMPFile** shadow_images) {
     DIR* dir;
     struct dirent* entry;
     struct stat fileStat;
 
-    dir = opendir(dirPath);
+    dir = opendir(dir_path);
     if (dir == NULL) {
         fprintf(stderr, "Could not open directory.\n");
         return FAILURE;
@@ -228,8 +227,7 @@ static int read_shadow_images(char* dirPath, BMPFile** shadow_images) {
     int count = 0;
     while ((entry = readdir(dir)) != NULL) {
         char path[MAX_FILE_PATH];
-        snprintf(path, MAX_FILE_PATH, "%s/%s", dirPath, entry->d_name);
-        printf("Reading file: %s\n", path);
+        snprintf(path, MAX_FILE_PATH, "%s/%s", dir_path, entry->d_name);
         if (stat(path, &fileStat) < 0) {
             fprintf(stderr, "Error reading file stats.\n");
             closedir(dir);
