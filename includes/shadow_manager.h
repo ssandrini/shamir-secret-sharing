@@ -10,6 +10,6 @@
 uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret);
 void free_shadows(uint8_t** shadows, int n);
 uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * shadow_numbers);
-void hide_secret(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits);
+void hide_shadow(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits);
 void recover_shadow(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits);
 #endif

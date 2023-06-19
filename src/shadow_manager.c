@@ -7,7 +7,7 @@
 #include "polynom.h"
 
 static int randomGF251() {
-    return (rand() % MODULUS) + 1; //Random number [1, 251]
+    return MODULAR_ARITHMETIC(1 + rand() % (MODULUS - 1)); //Random number [1, 250]
 }
 
 static bool detect_cheating(int a_0, int a_1, int b_0, int b_1) {
@@ -47,17 +47,17 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
         a_0 = MODULAR_ARITHMETIC(a_0) ? MODULAR_ARITHMETIC(a_0) : 1;
         a_1 = MODULAR_ARITHMETIC(a_1) ? MODULAR_ARITHMETIC(a_1) : 1;
 
-        Polynom * f = create_polynom(secret, k);
+        Polynom * f = create_polynom(secret + i, k);
         if(f == NULL) {
             fprintf(stderr, "Error allocating memory for polynom\n");
             free_shadows(shadows, n);
             return NULL;
         }
 
-        uint8_t r_i = MODULAR_ARITHMETIC(randomGF251());
+        uint8_t r_i = randomGF251();
 
-        uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * a_0); // riai,0 + bi,0 = 0
-        uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * a_1); // riai,1 + bi,1 = 0
+        uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * secret[i]); // riai,0 + bi,0 = 0
+        uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * secret[i+1]); // riai,1 + bi,1 = 0
 
         Polynom * g = create_polynom(secret + i + k - 2, k); // i + k - 2 for b_0 and b_1
         if(g == NULL) {
@@ -138,7 +138,7 @@ void free_shadows(uint8_t** shadows, int n) {
     free(shadows);
 }
 
-void hide_secret(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits) {
+void hide_shadow(BMPImage * shadow_image, uint8_t * shadow, int shadow_size, int bits) {
     int k = 0;
     for(int i = 0; i < shadow_size; i++) {
         for(int j = 0; j < 8/bits; j++) {
