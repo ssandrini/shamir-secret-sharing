@@ -44,8 +44,8 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
         uint8_t a_1 = secret[i+1];
 
         //If mod is 0 then a_i = 1
-        a_0 = MODULAR_ARITHMETIC(a_0) ? MODULAR_ARITHMETIC(a_0) : 1;
-        a_1 = MODULAR_ARITHMETIC(a_1) ? MODULAR_ARITHMETIC(a_1) : 1;
+        a_0 = MODULAR_ARITHMETIC(a_0) > 0 ? a_0 : 1;
+        a_1 = MODULAR_ARITHMETIC(a_1) > 0 ? a_1 : 1;
 
         Polynom * f = create_polynom(secret + i, k);
         if(f == NULL) {
@@ -56,8 +56,8 @@ uint8_t ** generate_shadows(int k, int n, int image_size, uint8_t* secret) {
 
         uint8_t r_i = randomGF251();
 
-        uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * secret[i]); // riai,0 + bi,0 = 0
-        uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * secret[i+1]); // riai,1 + bi,1 = 0
+        uint8_t b_0 = MODULAR_ARITHMETIC(-1 * r_i * a_0); // riai,0 + bi,0 = 0
+        uint8_t b_1 = MODULAR_ARITHMETIC(-1 * r_i * a_1); // riai,1 + bi,1 = 0
 
         Polynom * g = create_polynom(secret + i + k - 2, k); // i + k - 2 for b_0 and b_1
         if(g == NULL) {
