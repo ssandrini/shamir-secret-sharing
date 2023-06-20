@@ -10,7 +10,6 @@ all: $(OBJ_DIR) bmp_main
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-# TODO QUE ES ESTO ??????
 bmp_main: $(OBJ_DIR)/main.o $(OBJ_DIR)/bmp.o $(OBJ_DIR)/image_manager.o $(OBJ_DIR)/shadow_manager.o $(OBJ_DIR)/polynom.o
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/bmp_main $(OBJ_DIR)/main.o $(OBJ_DIR)/bmp.o $(OBJ_DIR)/image_manager.o $(OBJ_DIR)/shadow_manager.o $(OBJ_DIR)/polynom.o
 

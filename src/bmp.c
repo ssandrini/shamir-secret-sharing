@@ -35,9 +35,6 @@ BMPFile * read_bmp(char * filename) {
     uint8_t * map = (uint8_t*) mmap(NULL, file_stat.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFFSET_ZERO);
     if (map == MAP_FAILED) {
         fprintf(stderr, "Error mapping file\n");
-        // check ERRNO
-        perror("Error");
-
         close(fd);
         return NULL;
     }
@@ -89,7 +86,6 @@ int dump_bmp_image(BMPImage * bmp, const char * path) {
     FILE* file = fopen(path, "wb");
     if (file == NULL) {
         fprintf(stderr, "Error: could not open file for writing\n");
-        perror("Error");
         return -1;
     }
  

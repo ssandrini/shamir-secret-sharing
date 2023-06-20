@@ -88,7 +88,6 @@ int distribute_image(char* image_path, int k, char* dir) {
             }
         }
     } else {
-        // esto no deberia pasar nunca porque ya lo chequeamos antes
         fprintf(stderr, "Invalid k value. Please choose a value between 3 and 8.\n");
         return FAILURE;
     }
@@ -100,7 +99,7 @@ int distribute_image(char* image_path, int k, char* dir) {
 }
 
 int recover_image(char * image_path, int k, char* dir) {
-    // TODO: chequeo del K
+
     BMPFile * shadow_images[MAX_N] = {NULL};
     int n = read_shadow_images(dir, shadow_images);
     if(n == -1 ) {
@@ -144,9 +143,14 @@ int recover_image(char * image_path, int k, char* dir) {
         return FAILURE;
     }
 
-    int bits_lsb = LSB2;
+    int bits_lsb;
     if (k >= LSB4_MIN_K && k <= LSB4_MAX_K) {
         bits_lsb = LSB4;
+    } else if(k >= LSB2_MIN_K && k <= LSB2_MAX_K) {
+        bits_lsb = LSB2;
+    } else {
+        fprintf(stderr, "Invalid k value. Please choose a value between 3 and 8.\n");
+        return FAILURE;
     }
 
     for(int i = 0; i < k; i++) {
