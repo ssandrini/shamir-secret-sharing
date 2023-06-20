@@ -40,8 +40,13 @@ int distribute_image(char* image_path, int k, char* dir) {
 
     BMPFile * shadow_images[MAX_N] = {NULL};
     int n = read_shadow_images(dir, shadow_images);
-    if(n < k || n == -1) {
+    if(n == -1) {
         fprintf(stderr, "Failed to read shadow images from directory: %s\n", dir);
+        free_bmp(secret_file);
+        free_shadow_images(shadow_images);
+        return FAILURE;
+    } else if (n < k) {
+        fprintf(stderr, "Invalid image quantity in directory %s for specified k: %d\n", dir, k);
         free_bmp(secret_file);
         free_shadow_images(shadow_images);
         return FAILURE;

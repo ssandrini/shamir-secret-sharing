@@ -15,26 +15,26 @@
 BMPFile * read_bmp(char * filename) {
     int fd = open(filename, O_RDWR);
     if (fd == -1) {
-        fprintf(stderr, "error opening file");
+        fprintf(stderr, "Error opening bmp file\n");
         return NULL;
     }
     
     struct stat file_stat;
     if (fstat(fd, &file_stat) != 0) { 
-        fprintf(stderr, "error getting file size");
+        fprintf(stderr, "Error getting bmp file size\n");
         close(fd);
         return NULL;
     }
 
     if(file_stat.st_size > MAX_FILE_SIZE) {
-        fprintf(stderr, "File size too large\n");
+        fprintf(stderr, "BMP file size too large\n");
         close(fd);
         return NULL;
     }
     
     uint8_t * map = (uint8_t*) mmap(NULL, file_stat.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFFSET_ZERO);
     if (map == MAP_FAILED) {
-        fprintf(stderr, "Error mapping file\n");
+        fprintf(stderr, "Error mapping bmp file\n");
         close(fd);
         return NULL;
     }
@@ -49,7 +49,7 @@ BMPFile * read_bmp(char * filename) {
 
     BMPFile * bmp_file = (BMPFile *) malloc(sizeof(BMPFile));
     if (bmp_file == NULL) {
-        fprintf(stderr, "Malloc error\n");
+        fprintf(stderr, "Error allocating memory for bmp file\n");
         munmap(map, file_stat.st_size);
         close(fd);
         return NULL;
@@ -57,7 +57,7 @@ BMPFile * read_bmp(char * filename) {
 
     bmp_file->image = (BMPImage *) malloc(sizeof(BMPImage));
     if (bmp_file->image == NULL) {
-        fprintf(stderr, "Malloc error\n");
+        fprintf(stderr, "Error allocating memory for image\n");
         munmap(map, file_stat.st_size);
         close(fd);
         free(bmp_file);
