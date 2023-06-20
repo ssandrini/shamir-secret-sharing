@@ -11,7 +11,7 @@ static int randomGF251() {
 }
 
 static bool detect_cheating(int a_0, int a_1, int b_0, int b_1) {
-    for (int i = 0; i < MODULUS; i++)
+    for (int i = 1; i < MODULUS; i++)
         if (MODULAR_ARITHMETIC(a_0 * i + b_0) == 0 && MODULAR_ARITHMETIC(a_1 * i + b_1) == 0)
             return false;
     return true;
