@@ -111,7 +111,10 @@ uint8_t * recover_secret(int k, int shadow_size, uint8_t** shadows, uint8_t * sh
             return NULL;
         }
 
-        if (detect_cheating(f->coefficients[0], f->coefficients[1], g->coefficients[0], g->coefficients[1])) {
+        uint8_t a_0 = MODULAR_ARITHMETIC(f->coefficients[0]) > 0 ? f->coefficients[0] : 1;
+        uint8_t a_1 = MODULAR_ARITHMETIC(f->coefficients[1]) > 0 ?  f->coefficients[1] : 1;
+
+        if (detect_cheating(a_0, a_1, g->coefficients[0], g->coefficients[1])) {
             polynom_destroy(f);
             polynom_destroy(g);
             free(secret);
